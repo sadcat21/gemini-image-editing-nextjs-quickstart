@@ -18,7 +18,8 @@ export function ImagePromptInput({
 }: ImagePromptInputProps) {
   const [prompt, setPrompt] = useState("");
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     if (prompt.trim()) {
       onSubmit(prompt.trim());
       setPrompt("");
@@ -37,7 +38,7 @@ export function ImagePromptInput({
 
       <Input
         id="prompt"
-        className="border-secondary resize-none"
+        className="border-secondary"
         placeholder={
           isEditing
             ? "Example: Make the background blue and add a rainbow..."
