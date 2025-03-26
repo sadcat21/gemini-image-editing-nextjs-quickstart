@@ -3,7 +3,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "./ui/button";
-import { Upload as UploadIcon, Image as ImageIcon, X, AlertCircle } from "lucide-react";
+import { Upload as UploadIcon, Image as ImageIcon, X } from "lucide-react";
 
 interface ImageUploadProps {
   onImageSelect: (imageData: string) => void;
@@ -24,7 +24,6 @@ export function formatFileSize(bytes: number): string {
 export function ImageUpload({ onImageSelect, currentImage, onError }: ImageUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Update the selected file when the current image changes
   useEffect(() => {
@@ -35,13 +34,9 @@ export function ImageUpload({ onImageSelect, currentImage, onError }: ImageUploa
 
   const onDrop = useCallback(
     (acceptedFiles: File[], fileRejections) => {
-      // Clear any previous errors
-      setError(null);
-      
       if (fileRejections?.length > 0) {
-        const errorMessage = fileRejections[0].errors[0].message;
-        setError(errorMessage);
-        onError?.(errorMessage);
+        const error = fileRejections[0].errors[0];
+        onError?.(error.message);
         return;
       }
 
@@ -60,15 +55,13 @@ export function ImageUpload({ onImageSelect, currentImage, onError }: ImageUploa
         }
         setIsLoading(false);
       };
-      reader.onerror = (event) => {
-        const errorMessage = "Error reading file. Please try again.";
-        setError(errorMessage);
-        onError?.(errorMessage);
+      reader.onerror = (error) => {
+        onError?.("Error reading file. Please try again.");
         setIsLoading(false);
       };
       reader.readAsDataURL(file);
     },
-    [onImageSelect, onError]
+    [onImageSelect]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -83,19 +76,11 @@ export function ImageUpload({ onImageSelect, currentImage, onError }: ImageUploa
 
   const handleRemove = () => {
     setSelectedFile(null);
-    setError(null);
     onImageSelect("");
   };
 
   return (
     <div className="w-full">
-      {error && (
-        <div className="mb-3 p-3 text-sm rounded-lg bg-red-100 text-red-700 flex items-center">
-          <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
-          {error}
-        </div>
-      )}
-      
       {!currentImage ? (
         <div
           {...getRootProps()}

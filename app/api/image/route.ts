@@ -20,24 +20,8 @@ interface FormattedHistoryItem {
 
 export async function POST(req: NextRequest) {
   try {
-    // Make sure we have an API key configured
-    if (!GEMINI_API_KEY) {
-      return NextResponse.json(
-        { error: "GEMINI_API_KEY is not configured" },
-        { status: 500 }
-      );
-    }
-
-    // Parse JSON request
-    const requestData = await req.json().catch(() => null);
-    
-    if (!requestData) {
-      return NextResponse.json(
-        { error: "Invalid JSON in request body" },
-        { status: 400 }
-      );
-    }
-
+    // Parse JSON request instead of FormData
+    const requestData = await req.json();
     const { prompt, image: inputImage, history } = requestData;
 
     if (!prompt) {
@@ -146,11 +130,7 @@ export async function POST(req: NextRequest) {
       result = await chat.sendMessage(messageParts);
     } catch (error) {
       console.error("Error in chat.sendMessage:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error in AI processing";
-      return NextResponse.json(
-        { error: "Gemini API error", details: errorMessage },
-        { status: 500 }
-      );
+      throw error;
     }
 
     const response = result.response;
@@ -171,7 +151,7 @@ export async function POST(req: NextRequest) {
           mimeType = part.inlineData.mimeType || "image/png";
           console.log(
             "Image data received, length:",
-            imageData?.length || 0,
+            imageData.length,
             "MIME type:",
             mimeType
           );
@@ -184,25 +164,12 @@ export async function POST(req: NextRequest) {
           );
         }
       }
-    } else {
-      return NextResponse.json(
-        { error: "No response from Gemini API" },
-        { status: 500 }
-      );
     }
 
-    if (!imageData) {
-      return NextResponse.json(
-        { error: "No image data in Gemini response" },
-        { status: 500 }
-      );
-    }
-
-    // Return the base64 image and description as JSON
+    // Return just the base64 image and description as JSON
     return NextResponse.json({
-      image: `data:${mimeType};base64,${imageData}`,
+      image: imageData ? `data:${mimeType};base64,${imageData}` : null,
       description: textResponse,
-      success: true
     });
   } catch (error) {
     console.error("Error generating image:", error);
@@ -210,7 +177,6 @@ export async function POST(req: NextRequest) {
       {
         error: "Failed to generate image",
         details: error instanceof Error ? error.message : String(error),
-        success: false
       },
       { status: 500 }
     );

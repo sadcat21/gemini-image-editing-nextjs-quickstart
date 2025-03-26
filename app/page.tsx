@@ -1,12 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { ImagePromptInput } from "@/components/ImagePromptInput";
 import { ImageResultDisplay } from "@/components/ImageResultDisplay";
-import { ImageIcon, Wand2, AlertCircle, X } from "lucide-react";
+import { ImageIcon, Wand2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HistoryItem } from "@/lib/types";
-import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const [image, setImage] = useState<string | null>(null);
@@ -18,19 +17,7 @@ export default function Home() {
 
   const handleImageSelect = (imageData: string) => {
     setImage(imageData || null);
-    // Clear error when user selects a new image
-    if (error) setError(null);
   };
-
-  // Clear error after 10 seconds
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        setError(null);
-      }, 10000);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
 
   const handlePromptSubmit = async (prompt: string) => {
     try {
@@ -55,13 +42,12 @@ export default function Home() {
         body: JSON.stringify(requestData),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        // Extract detailed error information from the response
-        const errorMessage = data.details || data.error || "Failed to generate image";
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate image");
       }
+
+      const data = await response.json();
 
       if (data.image) {
         // Update the generated image and description
@@ -89,14 +75,10 @@ export default function Home() {
         // Update history with both messages
         setHistory((prevHistory) => [...prevHistory, userMessage, aiResponse]);
       } else {
-        setError("No image was returned from the AI. Please try again with a different prompt.");
+        setError("No image returned from API");
       }
     } catch (error) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : "An unexpected error occurred. Please try again.";
-      
-      setError(errorMessage);
+      setError(error instanceof Error ? error.message : "An error occurred");
       console.error("Error processing request:", error);
     } finally {
       setLoading(false);
@@ -110,10 +92,6 @@ export default function Home() {
     setLoading(false);
     setError(null);
     setHistory([]);
-  };
-
-  const dismissError = () => {
-    setError(null);
   };
 
   // If we have a generated image, we want to edit it next time
@@ -137,20 +115,8 @@ export default function Home() {
         </CardHeader>
         <CardContent className="space-y-6 pt-6 w-full">
           {error && (
-            <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg flex items-center justify-between">
-              <div className="flex items-center">
-                <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={dismissError}
-                className="h-6 w-6 p-0 rounded-full"
-                aria-label="Dismiss error message"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+            <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+              {error}
             </div>
           )}
 
@@ -159,7 +125,6 @@ export default function Home() {
               <ImageUpload
                 onImageSelect={handleImageSelect}
                 currentImage={currentImage}
-                onError={setError}
               />
               <ImagePromptInput
                 onSubmit={handlePromptSubmit}

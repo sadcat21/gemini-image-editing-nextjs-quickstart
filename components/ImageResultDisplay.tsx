@@ -34,46 +34,24 @@ export function ImageResultDisplay({
     setShowHistory(!showHistory);
   };
 
-  // Create a more descriptive alt text using the description if available
-  const imageAltText = description 
-    ? `Generated image: ${description}` 
-    : "Generated image by Gemini AI";
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Generated Image</h2>
         <div className="space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleDownload}
-            title="Download image"
-          >
+          <Button variant="outline" size="sm" onClick={handleDownload}>
             <Download className="w-4 h-4 mr-2" />
-            <span>Download</span>
+            Download
           </Button>
           {conversationHistory.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={toggleHistory}
-              aria-expanded={showHistory}
-              aria-controls="conversation-history"
-              title={showHistory ? "Hide conversation history" : "Show conversation history"}
-            >
+            <Button variant="outline" size="sm" onClick={toggleHistory}>
               <MessageCircle className="w-4 h-4 mr-2" />
-              <span>{showHistory ? "Hide History" : "Show History"}</span>
+              {showHistory ? "Hide History" : "Show History"}
             </Button>
           )}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onReset}
-            title="Start over with a new image"
-          >
+          <Button variant="outline" size="sm" onClick={onReset}>
             <RotateCcw className="w-4 h-4 mr-2" />
-            <span>Create New Image</span>
+            Create New Image
           </Button>
         </div>
       </div>
@@ -81,7 +59,7 @@ export function ImageResultDisplay({
       <div className="rounded-lg overflow-hidden bg-muted p-2">
         <img
           src={imageUrl}
-          alt={imageAltText}
+          alt={description || "Generated image"}
           className="max-w-[640px] h-auto mx-auto"
         />
       </div>
@@ -94,7 +72,7 @@ export function ImageResultDisplay({
       )}
 
       {showHistory && conversationHistory.length > 0 && (
-        <div id="conversation-history" className="p-4 rounded-lg">
+        <div className="p-4 rounded-lg">
           <h3 className="text-sm font-medium mb-4">Conversation History</h3>
           <div className="space-y-4">
             {conversationHistory.map((item, index) => (
@@ -114,7 +92,7 @@ export function ImageResultDisplay({
                         <div className="mt-2 overflow-hidden rounded-md">
                           <img
                             src={part.image}
-                            alt={item.role === "user" ? "Your uploaded image" : "Gemini generated image"}
+                            alt={`Image shared by ${item.role}`}
                             className="max-w-[16rem] h-auto object-contain"
                           />
                         </div>
