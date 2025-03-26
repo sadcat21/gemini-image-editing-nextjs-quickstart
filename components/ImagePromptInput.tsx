@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Wand2 } from "lucide-react";
+import { Wand2, Loader2 } from "lucide-react";
 import { Input } from "./ui/input";
 
 interface ImagePromptInputProps {
@@ -20,9 +20,24 @@ export function ImagePromptInput({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (prompt.trim()) {
+    if (prompt.trim() && !isLoading) {
       onSubmit(prompt.trim());
-      setPrompt("");
+      // Don't clear the prompt while loading, so user can see what they submitted
+      if (!isLoading) {
+        setPrompt("");
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Submit on Enter key press
+    if (e.key === 'Enter' && prompt.trim() && !isLoading) {
+      e.preventDefault();
+      onSubmit(prompt.trim());
+      // Don't clear the prompt while loading
+      if (!isLoading) {
+        setPrompt("");
+      }
     }
   };
 
@@ -46,15 +61,26 @@ export function ImagePromptInput({
         }
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
+        onKeyDown={handleKeyDown}
+        disabled={isLoading}
+        aria-label={isEditing ? "Image edit instructions" : "Image generation prompt"}
       />
 
       <Button
         type="submit"
         disabled={!prompt.trim() || isLoading}
         className="w-full bg-primary hover:bg-primary/90"
+        aria-busy={isLoading}
       >
-        <Wand2 className="w-4 h-4 mr-2" />
-        {isEditing ? "Edit Image" : "Generate Image"}
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : (
+          <Wand2 className="w-4 h-4 mr-2" />
+        )}
+        {isEditing 
+          ? isLoading ? "Editing Image..." : "Edit Image" 
+          : isLoading ? "Generating Image..." : "Generate Image"
+        }
       </Button>
     </form>
   );
