@@ -22,18 +22,22 @@ export async function POST(req: NextRequest) {
   try {
     // Make sure we have an API key configured
     if (!GEMINI_API_KEY) {
+      console.error("GEMINI_API_KEY is not configured");
       return NextResponse.json(
-        { error: "GEMINI_API_KEY is not configured" },
+        { success: false, error: "GEMINI_API_KEY is not configured" },
         { status: 500 }
       );
     }
 
     // Parse JSON request
-    const requestData = await req.json().catch(() => null);
+    const requestData = await req.json().catch((err) => {
+      console.error("Failed to parse JSON body:", err);
+      return null;
+    });
     
     if (!requestData) {
       return NextResponse.json(
-        { error: "Invalid JSON in request body" },
+        { success: false, error: "Invalid JSON in request body" },
         { status: 400 }
       );
     }
@@ -42,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     if (!prompt) {
       return NextResponse.json(
-        { error: "Prompt is required" },
+        { success: false, error: "Prompt is required" },
         { status: 400 }
       );
     }
@@ -60,6 +64,34 @@ export async function POST(req: NextRequest) {
     });
 
     let result;
+
+    // Validate the image if provided
+    if (inputImage) {
+      if (typeof inputImage !== "string" || !inputImage.startsWith("data:")) {
+        console.error("Invalid image data URL format", { inputImage });
+        return NextResponse.json(
+          { success: false, error: "Invalid image data URL format" },
+          { status: 400 }
+        );
+      }
+      const imageParts = inputImage.split(",");
+      if (imageParts.length < 2) {
+        console.error("Malformed image data URL", { inputImage });
+        return NextResponse.json(
+          { success: false, error: "Malformed image data URL" },
+          { status: 400 }
+        );
+      }
+      const base64Image = imageParts[1];
+      // Check for non-empty and valid base64 (basic check)
+      if (!base64Image || !/^([A-Za-z0-9+/=]+)$/.test(base64Image.replace(/\s/g, ""))) {
+        console.error("Image data is empty or not valid base64", { base64Image });
+        return NextResponse.json(
+          { success: false, error: "Image data is empty or not valid base64" },
+          { status: 400 }
+        );
+      }
+    }
 
     try {
       // Convert history to the format expected by Gemini API
@@ -148,7 +180,7 @@ export async function POST(req: NextRequest) {
       console.error("Error in chat.sendMessage:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error in AI processing";
       return NextResponse.json(
-        { error: "Gemini API error", details: errorMessage },
+        { success: false, error: "Gemini API error", details: errorMessage },
         { status: 500 }
       );
     }
@@ -185,32 +217,34 @@ export async function POST(req: NextRequest) {
         }
       }
     } else {
+      console.error("No response from Gemini API", { result });
       return NextResponse.json(
-        { error: "No response from Gemini API" },
+        { success: false, error: "No response from Gemini API" },
         { status: 500 }
       );
     }
 
     if (!imageData) {
+      console.error("No image data in Gemini response", { response });
       return NextResponse.json(
-        { error: "No image data in Gemini response" },
+        { success: false, error: "No image data in Gemini response" },
         { status: 500 }
       );
     }
 
     // Return the base64 image and description as JSON
     return NextResponse.json({
+      success: true,
       image: `data:${mimeType};base64,${imageData}`,
-      description: textResponse,
-      success: true
+      description: textResponse || null
     });
   } catch (error) {
     console.error("Error generating image:", error);
     return NextResponse.json(
       {
+        success: false,
         error: "Failed to generate image",
-        details: error instanceof Error ? error.message : String(error),
-        success: false
+        details: error instanceof Error ? error.message : String(error)
       },
       { status: 500 }
     );
