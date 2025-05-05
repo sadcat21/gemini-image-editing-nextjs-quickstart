@@ -59,7 +59,7 @@ export function ImageResultDisplay({
       <div className="rounded-lg overflow-hidden bg-muted p-2">
         <img
           src={imageUrl}
-          alt="Generated"
+          alt={description || "Generated image"}
           className="max-w-[640px] h-auto mx-auto"
         />
       </div>
@@ -92,8 +92,8 @@ export function ImageResultDisplay({
                         <div className="mt-2 overflow-hidden rounded-md">
                           <img
                             src={part.image}
-                            alt={`${item.role} image`}
-                            className="max-w-64 h-auto object-contain"
+                            alt={`Image shared by ${item.role}`}
+                            className="max-w-[16rem] h-auto object-contain"
                           />
                         </div>
                       )}
