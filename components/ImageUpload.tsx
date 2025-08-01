@@ -35,8 +35,7 @@ export function ImageUpload({ onImageSelect, currentImage, onError }: ImageUploa
   const onDrop = useCallback(
     (acceptedFiles: File[], fileRejections) => {
       if (fileRejections?.length > 0) {
-        const error = fileRejections[0].errors[0];
-        onError?.(error.message);
+        onError?.(fileRejections[0].errors[0].message);
         return;
       }
 
@@ -46,7 +45,6 @@ export function ImageUpload({ onImageSelect, currentImage, onError }: ImageUploa
       setSelectedFile(file);
       setIsLoading(true);
 
-      // Convert the file to base64
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target && event.target.result) {
@@ -55,13 +53,13 @@ export function ImageUpload({ onImageSelect, currentImage, onError }: ImageUploa
         }
         setIsLoading(false);
       };
-      reader.onerror = (error) => {
+      reader.onerror = () => {
         onError?.("Error reading file. Please try again.");
         setIsLoading(false);
       };
       reader.readAsDataURL(file);
     },
-    [onImageSelect]
+    [onImageSelect, onError] // ✅ تم تضمين onError
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
