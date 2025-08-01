@@ -207,13 +207,14 @@ export async function POST(req: NextRequest) {
           );
         }
       }
-    } else {
-      console.error("No response from Gemini API", { result });
-      return NextResponse.json(
-        { success: false, error: "No response from Gemini API" },
-        { status: 500 }
-      );
-    }
+} else {
+  console.error("No response from Gemini API");
+  return NextResponse.json(
+    { success: false, error: "No response from Gemini API" },
+    { status: 500 }
+  );
+}
+
 
     if (!imageData) {
       console.error("No image data in Gemini response", { response });
